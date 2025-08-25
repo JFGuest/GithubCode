@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Allowance Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+  <link rel="icon" href="icons/icon-512.png" sizes="512x512">
+  <link rel="stylesheet" href="styles.css">
+  <meta name="theme-color" content="#1976d2">
+</head>
+<body>
+  <main id="app" tabindex="-1">
+    <noscript>
+      <p>This app requires JavaScript.</p>
+    </noscript>
+    <div id="loading" class="screen active">
+      <div class="spinner"></div>
+      <p>Loading…</p>
+    </div>
+    <div id="auth" class="screen">
+      <h1>Allowance Tracker</h1>
+      <button id="signin-microsoft" class="btn primary"><img src="icons/ms-logo.svg" alt="" width="18"> Sign in with Microsoft</button>
+      <button id="signin-email" class="btn">Sign in with Email Magic Link</button>
+      <form id="email-form" class="hidden" autocomplete="off">
+        <label for="email">Email</label>
+        <input id="email" type="email" required autocomplete="email" />
+        <button type="submit" class="btn">Send Magic Link</button>
+        <button type="button" class="btn text" id="cancel-email">Cancel</button>
+      </form>
+      <div id="auth-msg" aria-live="polite"></div>
+    </div>
+    <div id="setup" class="screen">
+      <h2>Set up Household</h2>
+      <form id="setup-form">
+        <label for="hhname">Household Name</label>
+        <input id="hhname" required maxlength="32" />
+        <label for="weekly">Weekly Allowance (USD)</label>
+        <input id="weekly" type="number" min="1" max="200" step="1" required />
+        <label for="start">Tracking Start (Monday 09:00 PT)</label>
+        <input id="start" type="date" required />
+        <button type="submit" class="btn primary">Create Household</button>
+      </form>
+      <div id="setup-msg" aria-live="polite"></div>
+    </div>
+    <div id="main" class="screen">
+      <header>
+        <h2 id="household-name"></h2>
+        <div class="role-badge" id="role-badge"></div>
+        <button id="signout" class="btn text small" aria-label="Sign out">Sign Out</button>
+      </header>
+      <section id="kpis">
+        <div><span id="allowance-remain">0</span> <small>Allowance Remaining</small></div>
+        <div><span id="savings">0</span> <small>Savings</small></div>
+        <div><span id="granted">0</span> <small>Granted</small></div>
+      </section>
+      <nav id="actions">
+        <button id="add-spend" class="btn primary">Add Spend</button>
+        <button id="add-pay" class="btn">Add Pay</button>
+        <button id="adjust" class="btn">Adjust Allowance</button>
+        <button id="settings" class="btn">Settings</button>
+        <button id="invite" class="btn">Invite Child</button>
+        <button id="export" class="btn">Export</button>
+        <button id="import" class="btn">Import</button>
+        <button id="onedrive" class="btn">OneDrive Export</button>
+      </nav>
+      <nav id="actions-child" class="hidden">
+        <button id="add-spend-child" class="btn primary">Add Spend</button>
+      </nav>
+      <section id="history">
+        <h3>History</h3>
+        <ul id="txn-list"></ul>
+      </section>
+      <dialog id="dialog-spend">
+        <form id="form-spend" autocomplete="off">
+          <h3>Add Spend</h3>
+          <label for="spend-amount">Amount (USD)</label>
+          <input id="spend-amount" type="number" min="0.01" step="0.01" required />
+          <label for="spend-note">Note</label>
+          <input id="spend-note" maxlength="64" />
+          <button type="submit" class="btn primary">Submit</button>
+          <button type="button" class="btn text" id="cancel-spend">Cancel</button>
+          <div id="spend-error" class="error" aria-live="polite"></div>
+        </form>
+      </dialog>
+      <dialog id="dialog-pay">
+        <form id="form-pay" autocomplete="off">
+          <h3>Add Pay</h3>
+          <label for="pay-amount">Amount (USD)</label>
+          <input id="pay-amount" type="number" min="0.01" step="0.01" required />
+          <label for="pay-note">Note</label>
+          <input id="pay-note" maxlength="64" />
+          <button type="submit" class="btn primary">Submit</button>
+          <button type="button" class="btn text" id="cancel-pay">Cancel</button>
+        </form>
+      </dialog>
+      <dialog id="dialog-adjust">
+        <form id="form-adjust" autocomplete="off">
+          <h3>Adjust Allowance</h3>
+          <label for="adj-target">Target Remainder (USD)</label>
+          <input id="adj-target" type="number" min="0" step="0.01" required />
+          <button type="submit" class="btn primary">Adjust</button>
+          <button type="button" class="btn text" id="cancel-adjust">Cancel</button>
+        </form>
+      </dialog>
+      <dialog id="dialog-invite">
+        <form id="form-invite" autocomplete="off">
+          <h3>Invite Child</h3>
+          <label for="invite-email">Child Email</label>
+          <input id="invite-email" type="email" required autocomplete="email" />
+          <button type="submit" class="btn primary">Invite</button>
+          <button type="button" class="btn text" id="cancel-invite">Cancel</button>
+        </form>
+        <div id="invite-msg" aria-live="polite"></div>
+      </dialog>
+      <dialog id="dialog-import">
+        <form id="form-import" autocomplete="off">
+          <h3>Import Household Data</h3>
+          <label for="import-file">Paste or upload JSON or CSV:</label>
+          <textarea id="import-file" rows="7"></textarea>
+          <input type="file" id="import-upload" accept=".json,.csv" />
+          <button type="submit" class="btn primary">Import</button>
+          <button type="button" class="btn text" id="cancel-import">Cancel</button>
+        </form>
+        <div id="import-msg" aria-live="polite"></div>
+      </dialog>
+      <dialog id="dialog-settings">
+        <form id="form-settings" autocomplete="off">
+          <h3>Settings</h3>
+          <label for="set-weekly">Weekly Allowance (USD)</label>
+          <input id="set-weekly" type="number" min="1" max="200" step="1" required />
+          <label for="set-start">Tracking Start (Monday 09:00 PT)</label>
+          <input id="set-start" type="date" required />
+          <button type="submit" class="btn primary">Save</button>
+          <button type="button" class="btn text" id="cancel-settings">Cancel</button>
+        </form>
+        <div id="settings-msg" aria-live="polite"></div>
+      </dialog>
+      <dialog id="dialog-onedrive">
+        <form id="form-onedrive" autocomplete="off">
+          <h3>OneDrive Export</h3>
+          <button type="submit" class="btn primary">Connect & Export</button>
+          <button type="button" class="btn text" id="cancel-onedrive">Cancel</button>
+        </form>
+        <div id="onedrive-msg" aria-live="polite"></div>
+      </dialog>
+      <footer>
+        <small>Allowance Tracker &copy; 2025. <a href="https://github.com/JFGuest/allowance-tracker" target="_blank" rel="noopener">GitHub</a></small>
+      </footer>
+    </div>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+  </script>
+</body>
+</html>
